@@ -198,7 +198,7 @@ Now stay in character and respond like this to all future user messages. Begin w
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="empty-state">
-            <p>Welcome to April Fools AI! Ask me anything, but don't expect anything useful.</p>
+            <p>I am a totally helpful AI assistant. Ask me anything!</p>
           </div>
         )}
         {messages.map((message) => (
