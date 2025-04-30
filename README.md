@@ -1,27 +1,35 @@
 # Definitely Helpful AI
 
-The most *ahem* "helpful" AI assistant you'll ever meet. It's not sarcastic at all. Really. Trust us.
+The most *ahem* "helpful" AI assistant you'll ever meet. It's guaranteed to provide the most unique responses to all your inquiries. Trust us, it's "revolutionary".
 
 ## Features
 
-- 💬 Totally "useful" responses to all your questions
-- 🎭 Absolutely "professional" demeanor
-- 🤖 State-of-the-art "assistance" technology
-- 📱 Beautiful chat interface (no, really, this part is true)
-- 🔄 Clear chat functionality (when you've had enough "help")
-- ⚡ Lightning-fast responses (we spare no time in being "helpful")
+- 💬 Spectacularly "insightful" responses to all your questions
+- 🎭 An AI with more personality than most humans
+- 🤖 Advanced AI technology (that somehow missed the "helpful" class in AI school)
+- 📱 Beautiful, responsive chat interface (this part is genuinely good)
+- 🔄 Clear chat functionality (for when you need a fresh start after all that "wisdom")
+- 🌊 Real-time streaming responses that arrive character by character
+- 🤔 GPT integration that somehow manages to be both smart and useless simultaneously
 
 ## Tech Stack
 
-- Next.js 14 with App Router
-- React
+- Next.js 15 with App Router
+- React 19
+- OpenAI API integration
 - Tailwind CSS
 - TypeScript
-- Zero AI calls (we're "smart" enough without them)
+- Edge Runtime for streaming responses
 
 ## Getting Started
 
-First, run the development server:
+First, create a `.env.local` file with your OpenAI API key:
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -38,41 +46,41 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to experie
 ## How It Works
 
 1. Type your question in the chat
-2. Receive our AI's most..."thoughtful" response
-3. Marvel at its "incredible" problem-solving abilities
-4. Try not to laugh (okay, you can laugh)
+2. Watch as our AI carefully considers your query
+3. Receive a response that is... well, definitely something
+4. Try not to laugh (or cry, depending on your question)
 5. Clear the chat when you need a fresh start
-6. Repeat for endless "productivity"
+6. Repeat for endless "enlightenment"
 
 ## Warning
 
 Side effects may include:
 
-- Uncontrollable eye-rolling
 - Sudden bursts of laughter
-- Increased appreciation for actual helpful AI
-- Mild frustration (but in a fun way)
-- Addiction to sarcastic responses
+- Questioning everything you know about AI
+- Increased appreciation for actually helpful assistants
+- Mild confusion followed by amusement
+- Showing your friends "the worst AI ever" (which was our goal all along)
+
+## The Science Behind It
+
+Our AI has been meticulously trained to provide responses that are:
+
+- Technically coherent but practically useless
+- Delivered with unwavering confidence
+- Occasionally profound in their absurdity
+- Guaranteed to never solve your actual problem
 
 ## Deployment
 
-The app is deployed on Vercel and can be accessed at [https://30-in-30-app-7.vercel.app/](https://30-in-30-app-7.vercel.app/)
+The app features a real OpenAI integration with streaming responses, so it feels like a genuine AI assistant (just not a helpful one).
 
-*Note: No AI was harmed in the making of this app. Though its pride might have taken a hit.*
+*Note: No AI was harmed in the making of this app, though its reputation for helpfulness might have taken a hit.*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Credits
 
-## Learn More
+Created as part of a series exploring different aspects of AI interfaces and user experiences. This particular implementation highlights the importance of system prompts in shaping AI personality and behavior.
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Feel free to use this code to create your own "helpful" assistant. The world needs more of those, right?

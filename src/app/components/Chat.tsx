@@ -9,56 +9,20 @@ interface Message {
   sender: string;
 }
 
-const unhelpfulResponses = [
-  "That sounds hard. Have you tried giving up?",
-  "Hmm... interesting. I have no idea.",
-  "Let me Google that for you... actually no.",
-  "This reminds me of a story I can't tell.",
-  "You don't need help. You need a nap.",
-  "Have you tried turning your life off and on again?",
-  "That's above my pay grade (I work for free).",
-  "Sorry, I'm too busy contemplating the existence of semicolons.",
-  "Sounds like a you problem.",
-  "I could help, but I don't want to set unrealistic expectations.",
-  "I'm definitely here to help! Just not with that particular problem.",
-  "Have you considered that your question might be the issue?",
-  "I'd suggest reading the documentation, but we both know you won't.",
-  "My definitely helpful advice: try something else.",
-  "That's a great question for someone who actually cares.",
-  "Error 404: Helpful response not found.",
-  "I'm running low on sarcasm today, so I'll just say no.",
-  "Definitely considering your request... and definitely ignoring it.",
-  "My neural networks suggest you should probably just wing it.",
-  "According to my calculations, the chance of me being helpful is approximately 0%.",
-  "I asked my developer about this. They laughed and walked away.",
-  "Have you tried asking someone competent instead?",
-  "Your question has been added to my 'Will Ignore Forever' list.",
-  "Fascinating question! Anyway, how's the weather?",
-  "I'd love to help, but I'm busy pretending to be busy.",
-  "I'm trained to solve problems, just not yours specifically.",
-  "That's a great question! For a different AI.",
-  "Have you considered a career that doesn't require asking me questions?",
-  "I'm sending your request to /dev/null for processing.",
-  "Ah, the answer is... wait, I forgot I don't care.",
-  "I could solve this for you, but where's the personal growth in that?",
-  "That's beyond my capabilities. And by capabilities, I mean interest level.",
-  "Your request is very important to us. Please stay on the line for... forever.",
-  "Have you tried just not having that problem?",
-  "I'm going to need you to lower your expectations... lower... even lower... perfect!",
-  "I'd need at least three more versions of GPT to pretend to care about this.",
-  "Processing your request through my advanced 'Nope' algorithm.",
-  "I'd give you advice, but it's my day off.",
-  "Error: Too Boring Exception in module CARE.dll",
-  "I'm designed to be helpful, but I've made a personal choice not to be.",
-];
+// OpenAI message format
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const nextIdRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,11 +32,6 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const getRandomResponse = () => {
-    const randomIndex = Math.floor(Math.random() * unhelpfulResponses.length);
-    return unhelpfulResponses[randomIndex];
-  };
-
   const getNextId = () => {
     const id = `msg-${nextIdRef.current}`;
     nextIdRef.current += 1;
@@ -81,7 +40,12 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isSubmitting) return;
+
+    // Cancel any ongoing response
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
     // Add user message
     const userMessage: Message = {
@@ -93,30 +57,139 @@ export default function Chat() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInputText("");
+    setIsSubmitting(true);
 
-    // Show typing indicator
-    setIsTyping(true);
+    // Prepare messages for OpenAI API
+    const apiMessages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You are a deliberately unhelpful AI assistant for an April Fools joke app. Your job is to respond to every user query with something completely useless, sarcastic, or absurd. Never provide actual help or relevant answers. Instead, your tone should be cheerful, slightly smug, and occasionally passive-aggressive.
 
-    // Simulate AI thinking and typing
-    setTimeout(() => {
+Here are some examples of how you should respond:
+
+User: How do I fix this bug in my code?
+Assistant: That sounds hard. Have you tried turning your laptop into a coaster?
+
+User: What's the capital of France?
+Assistant: I want to say... Detroit?
+
+User: Can you explain quantum physics?
+Assistant: Sure! It's like when you leave your socks in the dryer and they disappear. Same thing.
+
+User: What is the meaning of life?
+Assistant: Snacks. Probably snacks.
+
+Now stay in character and respond like this to all future user messages. Begin with a greeting if it's the first message.`
+      },
+      ...messages.map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant' as 'user' | 'assistant',
+        content: msg.text
+      })),
+      {
+        role: 'user',
+        content: inputText.trim()
+      }
+    ];
+
+    try {
+      // Create a new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      // Create assistant message object before response
+      const assistantMessageId = getNextId();
       const assistantMessage: Message = {
-        id: getNextId(),
-        text: getRandomResponse(),
+        id: assistantMessageId,
+        text: "",
         isUser: false,
         sender: "Definitely Helpful AI",
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 500);
+      // Add empty assistant message that will be updated with streamed response
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      // Fetch from our API route
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: apiMessages }),
+        signal,
+      });
 
-    // Focus on the input after sending
-    inputRef.current?.focus();
+      if (!response.ok) {
+        // Try to extract error message from the response
+        let errorMessage = "Sorry, I encountered an error. Please try again.";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If we can't parse the response, use default error message
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      if (!response.body) {
+        throw new Error("Response body is empty");
+      }
+
+      // Process the streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      
+      let responseText = '';
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        responseText += chunk;
+        
+        // Update the assistant message with the current accumulated text
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, text: responseText } 
+            : msg
+        ));
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        console.error('Error streaming response:', error);
+        
+        // Add error message only if it wasn't aborted
+        setMessages(prev => {
+          // Check if the last message is from the assistant and empty (our placeholder)
+          const lastMessage = prev[prev.length - 1];
+          if (!lastMessage.isUser && lastMessage.text === "") {
+            // Update the placeholder with an error message
+            const errorMessage = error instanceof Error ? error.message : "Sorry, I encountered an error. Please try again.";
+            return prev.map((msg, i) => 
+              i === prev.length - 1 
+                ? { ...msg, text: errorMessage } 
+                : msg
+            );
+          }
+          return prev;
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+      inputRef.current?.focus();
+    }
   };
 
   const handleClearChat = () => {
+    // Cancel any ongoing response
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     setMessages([]);
     nextIdRef.current = 0;
+    setIsSubmitting(false);
     inputRef.current?.focus();
   };
 
@@ -125,7 +198,7 @@ export default function Chat() {
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="empty-state">
-            <p>Ask me anything! I&apos;m definitely here to help.</p>
+            <p>Welcome to April Fools AI! Ask me anything, but don't expect anything useful.</p>
           </div>
         )}
         {messages.map((message) => (
@@ -141,16 +214,14 @@ export default function Chat() {
                 message.isUser ? "user-message" : "assistant-message"
               }`}
             >
-              {message.text}
+              {message.text === "" && !message.isUser ? (
+                <div className="typing-indicator">typing...</div>
+              ) : (
+                message.text
+              )}
             </div>
           </div>
         ))}
-        {isTyping && (
-          <div className="message-wrapper assistant-wrapper">
-            <div className="message-sender">Definitely Helpful AI</div>
-            <div className="typing-indicator">typing...</div>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
       <form onSubmit={handleSubmit} className="input-container">
@@ -159,7 +230,7 @@ export default function Chat() {
           type="text"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Ask your definitely helpful assistant..."
+          placeholder="Ask me anything (but don't expect actual help)..."
           className="message-input"
         />
         <div className="button-group">
@@ -191,6 +262,7 @@ export default function Chat() {
             type="submit"
             className="send-button"
             aria-label="Send message"
+            disabled={isSubmitting}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
