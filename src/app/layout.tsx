@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Definitely Helpful AI",
   description:
     "A chat interface with a definitely (not) helpful AI that provides sarcastic, useless responses",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
